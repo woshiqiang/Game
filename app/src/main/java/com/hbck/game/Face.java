@@ -8,7 +8,7 @@ import android.graphics.Point;
  * @Date 2018-07-06.
  */
 public class Face extends Sprite {
-    int speed = 12;
+    int speed = 6;
     int tX;
     int tY;
 

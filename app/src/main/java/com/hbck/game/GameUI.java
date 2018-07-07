@@ -23,8 +23,10 @@ public class GameUI extends SurfaceView implements SurfaceHolder.Callback {
     private boolean flag;//线程运行的标记
     private SurfaceHolder holder;
     //-----------
-    private Man man;
-    private List<Face> faces;
+    private Man man;//小人
+    private List<Face> faces;//笑脸
+    private MyButton upButton, downButton, leftButton, rightButton;//用到的按钮
+
 
     public GameUI(Context context) {
         super(context);
@@ -56,7 +58,18 @@ public class GameUI extends SurfaceView implements SurfaceHolder.Callback {
         paint.setColor(Color.GRAY);
         canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
 
-        man.drawSelf(canvas);
+        //绘制 文字
+        Paint textPaint = new Paint();
+        textPaint.setColor(Color.RED);
+        textPaint.setTextSize(100);
+        canvas.drawText("双击666", 150, getHeight() / 3*2, textPaint);
+
+        man.drawSelf(canvas);//绘制男孩
+
+        downButton.drawSelf(canvas);//绘制按钮
+        upButton.drawSelf(canvas);
+        leftButton.drawSelf(canvas);
+        rightButton.drawSelf(canvas);
 
         for (Face f : faces) {
             f.drawSelf(canvas);
@@ -72,9 +85,51 @@ public class GameUI extends SurfaceView implements SurfaceHolder.Callback {
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        faces = new CopyOnWriteArrayList<>();
-        Bitmap manBitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.avatar_boy);
-        man = new Man(manBitmap, new Point(0, 0));
+//        Bitmap manBitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.avatar_boy);
+        Bitmap manBitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.icon);
+        man = new Man(manBitmap, new Point(getWidth() / 2 - manBitmap.getWidth() / 2, getHeight() / 4));//创建男孩
+        faces = new CopyOnWriteArrayList<>();//可以在遍历的过程中进行增删
+        //下
+        Bitmap downBtnDefaultBitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.bottom_default);
+        Bitmap downBtnPressedBitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.bottom_press);
+        downButton = new MyButton(downBtnDefaultBitmap, new Point(getWidth() / 2 - downBtnDefaultBitmap.getWidth() / 2, getHeight() - 200), downBtnPressedBitmap);//创建button
+        downButton.setOnClickListener(new MyButton.OnClickListener() {
+            @Override
+            public void onClick() {
+                man.move(Man.DOWN);
+            }
+        });
+        //上
+        Bitmap upBtnDefaultBitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.top_default);
+        Bitmap upBtnPressedBitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.top_press);
+        upButton = new MyButton(upBtnDefaultBitmap, new Point(getWidth() / 2 - upBtnDefaultBitmap.getWidth() / 2, getHeight() - 400), upBtnPressedBitmap);//创建button
+        upButton.setOnClickListener(new MyButton.OnClickListener() {
+            @Override
+            public void onClick() {
+                man.move(Man.UP);
+            }
+        });
+        //左
+        Bitmap leftBtnDefaultBitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.left_default);
+        Bitmap leftBtnPressedBitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.left_press);
+        leftButton = new MyButton(leftBtnDefaultBitmap, new Point(getWidth() / 4 - leftBtnDefaultBitmap.getWidth() / 2, getHeight() - 300), leftBtnPressedBitmap);//创建button
+        leftButton.setOnClickListener(new MyButton.OnClickListener() {
+            @Override
+            public void onClick() {
+                man.move(Man.LEFT);
+            }
+        });
+
+        //右
+        Bitmap rightBtnDefaultBitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.right_default);
+        Bitmap rightBtnPressedBitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.right_press);
+        rightButton = new MyButton(rightBtnDefaultBitmap, new Point(getWidth() / 4 * 3 - rightBtnDefaultBitmap.getWidth() / 2, getHeight() - 300), rightBtnPressedBitmap);//创建button
+        rightButton.setOnClickListener(new MyButton.OnClickListener() {
+            @Override
+            public void onClick() {
+                man.move(Man.RIGHT);
+            }
+        });
 
         renderThread = new RenderThread();
         flag = true;
@@ -103,8 +158,26 @@ public class GameUI extends SurfaceView implements SurfaceHolder.Callback {
             case MotionEvent.ACTION_DOWN://当按下时创建笑脸
                 int X = (int) event.getRawX();
                 int Y = (int) event.getRawY();
-                Face face = man.createFace(getContext(), new Point(X, Y));
-                faces.add(face);
+                if (downButton.isClick(new Point(X, Y))) {
+                    downButton.click();
+                } else if (upButton.isClick(new Point(X, Y))) {
+                    upButton.click();
+                } else if (leftButton.isClick(new Point(X, Y))) {
+                    leftButton.click();
+                } else if (rightButton.isClick(new Point(X, Y))) {
+                    rightButton.click();
+                } else {
+                    Face face = man.createFace(getContext(), new Point(X, Y));
+                    faces.add(face);
+                }
+
+                break;
+            case MotionEvent.ACTION_UP:
+                //当手指抬起时 让按钮点击的状态改为false
+                upButton.setIsClick(false);
+                downButton.setIsClick(false);
+                leftButton.setIsClick(false);
+                rightButton.setIsClick(false);
                 break;
         }
     }
